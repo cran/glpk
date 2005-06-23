@@ -2,6 +2,8 @@
 #include "glplib.h"
 #include "R_glpk.h"
 
+jmp_buf R_glpk_env;
+
 static int 
 R_glpk_print(void *not_used, char *mesg)
 {

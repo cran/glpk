@@ -12,7 +12,7 @@ function(lib, pkg)
 glpk_strerror = 
 function(i) 
 {
-    ecodes = lpx_variables
+    ecodes = lpx_constants
     as.character(ecodes$string[which(ecodes$value == i)])
 }
 
@@ -74,8 +74,36 @@ LPX_E_SING = 211
 LPX_E_NOCONV = 212
 LPX_E_NOPFS = 213
 LPX_E_NODFS = 214
+LPX_K_MSGLEV = 300
+LPX_K_SCALE = 301
+LPX_K_DUAL = 302
+LPX_K_PRICE = 303
+LPX_K_RELAX = 304
+LPX_K_TOLBND = 305
+LPX_K_TOLDJ = 306
+LPX_K_TOLPIV = 307
+LPX_K_ROUND = 308
+LPX_K_OBJLL = 309
+LPX_K_OBJUL = 310
+LPX_K_ITLIM = 311
+LPX_K_ITCNT = 312
+LPX_K_TMLIM = 313
+LPX_K_OUTFRQ = 314
+LPX_K_OUTDLY = 315
+LPX_K_BRANCH = 316
+LPX_K_BTRACK = 317
+LPX_K_TOLINT = 318
+LPX_K_TOLOBJ = 319
+LPX_K_MPSINFO = 320
+LPX_K_MPSOBJ = 321
+LPX_K_MPSORIG = 322
+LPX_K_MPSWIDE = 323
+LPX_K_MPSFREE = 324
+LPX_K_MPSSKIP = 325
+LPX_K_LPTORIG = 326
+LPX_K_PRESOL = 327
 
-"lpx_variables" <-
+"lpx_constants" <-
 structure(list(symbol = structure(as.integer(c(63, 66, 65, 64, 
 2, 3, 76, 73, 74, 75, 9, 6, 7, 8, 78, 77, 32, 31, 28, 30, 26, 
 62, 81, 5, 27, 1, 68, 71, 67, 70, 4, 33, 72, 25, 29, 69, 79, 

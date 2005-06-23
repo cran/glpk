@@ -1,4 +1,4 @@
-package GLPKParseTools;
+package R_GLPKParseTools;
 use Switch;
 use strict;
 
@@ -46,8 +46,8 @@ sub _Clean {
     return $line;
 }
 
-package GLPKDeclParser;
-use base 'GLPKParseTools';
+package R_GLPKDeclParser;
+use base 'R_GLPKParseTools';
 
 sub parse {
     my ($s, $line) = @_;
@@ -76,6 +76,8 @@ sub _build_symbols_glpk {
     $s->{symbols}{glpk_dec} = $dec;
 
     ($s->{symbols}{glpk_method_ret} = $ret) =~ s/\s+$//;
+    $s->{symbols}{glpk_method_ret_kind} = ($ret =~ m/\*/ ? 'POINTER' : 'VALUE');
+
     $s->{symbols}{glpk_method}     = $method;
     $s->{symbols}{glpk_method_par} = $par;
 
@@ -88,7 +90,7 @@ sub _build_symbols_glpk {
     for (@pars)
       {
         my ($type, $name, $array_sym) = /(\w+\s+\**)(\w+)([\[\]]*)/;
-        warn "Regex match failed in GLPKParseTool::_build_symbols_glpk_method"
+        warn "Regex match failed in R_GLPKParseTool::_build_symbols_glpk_method"
             if !$type;
 
         $type =~ s/\s+$//;
@@ -160,16 +162,19 @@ sub _build_R_c_par_lists {
         my $rtype = $s->Ctype_to_Rtype($ctype, 'R_ExternalPtrAddr');
 
         my $conv;
-        if ($rtype eq 'R_ExternalPtrAddr') 
-          { 
-            $conv = sprintf "%s(%s)", $rtype, $name;
-          }
-        else
+        switch ($kind)
           {
-            $conv = sprintf "%s_%s(%s)", $rtype, $kind, $name;
+            case 'POINTER' 
+            {
+              if ($rtype eq 'R_ExternalPtrAddr')
+              { $conv = sprintf "%s(%s)", $rtype, $name }
+              else
+              { $conv = sprintf "&(%s_%s(%s)[-1])", $rtype, $kind, $name }
+            }
+            else
+              { $conv = sprintf "%s_%s(%s)", $rtype, $kind, $name }
+
           }
-
-
         push @rtype, $rtype;
         push @rtype_conv, $conv;
      }
@@ -202,11 +207,10 @@ sub _build_symbols_R_r {
         else 
           { 
             my $r_c_par_kind = $s->{symbols}{R_c_par_kind}[$i];
-            if ($r_c_par_kind eq 'POINTER')
-              {
-                $r_par_name = sprintf "c(0,%s)", $r_par_name;
-              }
-
+            #if ($r_c_par_kind eq 'POINTER')
+            #  {
+            #    $r_par_name = sprintf "c(0,%s)", $r_par_name;
+            #  }
             $r_par_conv = sprintf "as.%s(%s)", lc $r_c_par, $r_par_name;
           }
 
@@ -214,8 +218,8 @@ sub _build_symbols_R_r {
       }
 }
 
-package GLPKDefineVarParser;
-use base 'GLPKParseTools';
+package R_GLPKDefineVarParser;
+use base 'R_GLPKParseTools';
 
 sub parse {
     my ($s, $line) = @_;

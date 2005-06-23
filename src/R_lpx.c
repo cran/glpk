@@ -55,14 +55,14 @@ SEXP R_lpx_create_prob()
     SEXP ret = R_NilValue;
     LPX * xret = 0;
 
-
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_create_prob();
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -126,12 +126,9 @@ SEXP R_lpx_add_rows(SEXP lp, SEXP nrs)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_add_rows(R_ExternalPtrAddr(lp), INTEGER_VALUE(nrs));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -146,12 +143,9 @@ SEXP R_lpx_add_cols(SEXP lp, SEXP ncs)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_add_cols(R_ExternalPtrAddr(lp), INTEGER_VALUE(ncs));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -235,7 +229,7 @@ SEXP R_lpx_set_mat_row(SEXP lp, SEXP i, SEXP len, SEXP ind, SEXP val)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_set_mat_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(i), INTEGER_VALUE(len), INTEGER_POINTER(ind), NUMERIC_POINTER(val)); 
+    lpx_set_mat_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(i), INTEGER_VALUE(len), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1])); 
 end:
     return ret;
 } 
@@ -247,7 +241,7 @@ SEXP R_lpx_set_mat_col(SEXP lp, SEXP j, SEXP len, SEXP ind, SEXP val)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_set_mat_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(j), INTEGER_VALUE(len), INTEGER_POINTER(ind), NUMERIC_POINTER(val)); 
+    lpx_set_mat_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(j), INTEGER_VALUE(len), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1])); 
 end:
     return ret;
 } 
@@ -259,7 +253,7 @@ SEXP R_lpx_load_matrix(SEXP lp, SEXP ne, SEXP ia, SEXP ja, SEXP ar)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_load_matrix(R_ExternalPtrAddr(lp), INTEGER_VALUE(ne), INTEGER_POINTER(ia), INTEGER_POINTER(ja), NUMERIC_POINTER(ar)); 
+    lpx_load_matrix(R_ExternalPtrAddr(lp), INTEGER_VALUE(ne), &(INTEGER_POINTER(ia)[-1]), &(INTEGER_POINTER(ja)[-1]), &(NUMERIC_POINTER(ar)[-1])); 
 end:
     return ret;
 } 
@@ -331,7 +325,7 @@ SEXP R_lpx_del_rows(SEXP lp, SEXP nrs, SEXP num)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_del_rows(R_ExternalPtrAddr(lp), INTEGER_VALUE(nrs), INTEGER_POINTER(num)); 
+    lpx_del_rows(R_ExternalPtrAddr(lp), INTEGER_VALUE(nrs), &(INTEGER_POINTER(num)[-1])); 
 end:
     return ret;
 } 
@@ -343,7 +337,7 @@ SEXP R_lpx_del_cols(SEXP lp, SEXP ncs, SEXP num)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_del_cols(R_ExternalPtrAddr(lp), INTEGER_VALUE(ncs), INTEGER_POINTER(num)); 
+    lpx_del_cols(R_ExternalPtrAddr(lp), INTEGER_VALUE(ncs), &(INTEGER_POINTER(num)[-1])); 
 end:
     return ret;
 } 
@@ -370,12 +364,9 @@ SEXP R_lpx_find_row(SEXP lp, SEXP name)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_find_row(R_ExternalPtrAddr(lp), CHARACTER_VALUE(name));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -390,12 +381,9 @@ SEXP R_lpx_find_col(SEXP lp, SEXP name)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_find_col(R_ExternalPtrAddr(lp), CHARACTER_VALUE(name));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -436,9 +424,9 @@ SEXP R_lpx_get_prob_name(SEXP lp)
     xret = lpx_get_prob_name(R_ExternalPtrAddr(lp));
     if (xret)
       {
-        PROTECT(ret = NEW_CHARACTER(1));
-        SET_STRING_ELT(ret, 0, mkChar(xret));
-        UNPROTECT(1); 
+    PROTECT(ret = NEW_CHARACTER(1));
+    SET_STRING_ELT(ret, 0, mkChar(xret));
+    UNPROTECT(1); 
       } 
 end:
     return ret;
@@ -454,12 +442,9 @@ SEXP R_lpx_get_class(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_class(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -476,9 +461,9 @@ SEXP R_lpx_get_obj_name(SEXP lp)
     xret = lpx_get_obj_name(R_ExternalPtrAddr(lp));
     if (xret)
       {
-        PROTECT(ret = NEW_CHARACTER(1));
-        SET_STRING_ELT(ret, 0, mkChar(xret));
-        UNPROTECT(1); 
+    PROTECT(ret = NEW_CHARACTER(1));
+    SET_STRING_ELT(ret, 0, mkChar(xret));
+    UNPROTECT(1); 
       } 
 end:
     return ret;
@@ -494,12 +479,9 @@ SEXP R_lpx_get_obj_dir(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_obj_dir(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -514,12 +496,9 @@ SEXP R_lpx_get_num_rows(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_num_rows(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -534,12 +513,9 @@ SEXP R_lpx_get_num_cols(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_num_cols(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -554,12 +530,9 @@ SEXP R_lpx_get_num_int(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_num_int(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -574,12 +547,9 @@ SEXP R_lpx_get_num_bin(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_num_bin(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -596,9 +566,9 @@ SEXP R_lpx_get_row_name(SEXP lp, SEXP i)
     xret = lpx_get_row_name(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
     if (xret)
       {
-        PROTECT(ret = NEW_CHARACTER(1));
-        SET_STRING_ELT(ret, 0, mkChar(xret));
-        UNPROTECT(1); 
+    PROTECT(ret = NEW_CHARACTER(1));
+    SET_STRING_ELT(ret, 0, mkChar(xret));
+    UNPROTECT(1); 
       } 
 end:
     return ret;
@@ -616,9 +586,9 @@ SEXP R_lpx_get_col_name(SEXP lp, SEXP j)
     xret = lpx_get_col_name(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
     if (xret)
       {
-        PROTECT(ret = NEW_CHARACTER(1));
-        SET_STRING_ELT(ret, 0, mkChar(xret));
-        UNPROTECT(1); 
+    PROTECT(ret = NEW_CHARACTER(1));
+    SET_STRING_ELT(ret, 0, mkChar(xret));
+    UNPROTECT(1); 
       } 
 end:
     return ret;
@@ -634,12 +604,9 @@ SEXP R_lpx_get_col_kind(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_kind(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -654,12 +621,9 @@ SEXP R_lpx_get_row_type(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_type(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -674,12 +638,9 @@ SEXP R_lpx_get_row_lb(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_lb(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -694,12 +655,9 @@ SEXP R_lpx_get_row_ub(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_ub(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -714,12 +672,9 @@ SEXP R_lpx_get_col_type(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_type(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -734,12 +689,9 @@ SEXP R_lpx_get_col_lb(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_lb(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -754,12 +706,9 @@ SEXP R_lpx_get_col_ub(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_ub(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -774,12 +723,9 @@ SEXP R_lpx_get_obj_coef(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_obj_coef(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -794,84 +740,72 @@ SEXP R_lpx_get_num_nz(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_num_nz(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
+
 /** R-specifc routine for in-out parameters **/
+
+typedef int (*GetVecLen) (LPX *lp);
+typedef int (*GetVec)    (LPX *lp, int i, int ind[], double val[]);
+
+static SEXP 
+get_mat_vector(SEXP lp, SEXP i, GetVecLen get_vec_len, GetVec get_vec) 
+{
+    int len, xret = 0;
+    SEXP n, ind, val, names, listret = R_NilValue;
+
+    R_LPX_TYPE_CHECK(lp);
+
+    len = get_vec_len(R_ExternalPtrAddr(lp));
+
+    PROTECT(ind = NEW_INTEGER(len));
+    PROTECT(val = NEW_NUMERIC(len));
+
+    if (!R_glpk_setjmp())
+      {
+        xret = get_vec(R_ExternalPtrAddr(lp), 
+                       INTEGER_VALUE(i), 
+                       &(INTEGER_POINTER(ind)[-1]), 
+                       &(NUMERIC_POINTER(val)[-1]));
+        if (xret)
+          {
+            PROTECT(n = NEW_INTEGER(1));
+            INTEGER_POINTER(n)[0] = xret;
+            
+            PROTECT(names = NEW_CHARACTER(3));
+            SET_ELEMENT(names, 0, mkChar("n"));
+            SET_ELEMENT(names, 1, mkChar("ind"));
+            SET_ELEMENT(names, 2, mkChar("val"));
+
+            PROTECT(listret = NEW_LIST(3));
+            SET_ELEMENT(listret, 0, n);
+            SET_ELEMENT(listret, 1, ind);
+            SET_ELEMENT(listret, 2, val);
+            SET_NAMES(listret, names);
+
+            UNPROTECT(3);
+          }
+      }
+    UNPROTECT(2);
+    return listret;
+} 
+
 /** glpk api: int lpx_get_mat_row(LPX *lp, int i, int ind[], double val[]); **/
 SEXP R_lpx_get_mat_row(SEXP lp, SEXP i)
 {
-    int len, xret = 0;
-    SEXP ret, ind, val, listret = R_NilValue;
-
-    R_LPX_CHECK(lp);
-
-    len = lpx_get_num_rows(R_ExternalPtrAddr(lp));
-
-    PROTECT(ind = NEW_INTEGER(len+1));
-    PROTECT(val = NEW_NUMERIC(len+1));
-
-    if (!R_glpk_setjmp())
-      {
-        xret = lpx_get_mat_row(R_ExternalPtrAddr(lp), 
-                               INTEGER_VALUE(i), 
-                               INTEGER_POINTER(ind), 
-                               NUMERIC_POINTER(val));
-        if (xret)
-          {
-            PROTECT(ret = NEW_INTEGER(1));
-            INTEGER_POINTER(ret)[0] = xret;
-            PROTECT(listret = NEW_LIST(3));
-            SET_ELEMENT(listret, 0, ret);
-            SET_ELEMENT(listret, 1, ind);
-            SET_ELEMENT(listret, 2, val);
-            UNPROTECT(2);
-          }
-      }
-    UNPROTECT(2);
-    return listret;
-
+    return get_mat_vector(lp, i, lpx_get_num_rows, lpx_get_mat_row);
 } 
-/** R-specifc routine for in-out parameters **/
+
 /** glpk api: int lpx_get_mat_col(LPX *lp, int j, int ind[], double val[]); **/
 SEXP R_lpx_get_mat_col(SEXP lp, SEXP j)
 {
-    int len, xret = 0;
-    SEXP ret, ind, val, listret = R_NilValue;
-
-    R_LPX_CHECK(lp);
-
-    len = lpx_get_num_rows(R_ExternalPtrAddr(lp));
-
-    PROTECT(ind = NEW_INTEGER(len+1));
-    PROTECT(val = NEW_NUMERIC(len+1));
-
-    if (!R_glpk_setjmp())
-      {
-        xret = lpx_get_mat_col(R_ExternalPtrAddr(lp), 
-                               INTEGER_VALUE(j), 
-                               INTEGER_POINTER(ind), 
-                               NUMERIC_POINTER(val));
-        if (xret)
-          {
-            PROTECT(ret = NEW_INTEGER(1));
-            INTEGER_POINTER(ret)[0] = xret;
-            PROTECT(listret = NEW_LIST(3));
-            SET_ELEMENT(listret, 0, ret);
-            SET_ELEMENT(listret, 1, ind);
-            SET_ELEMENT(listret, 2, val);
-            UNPROTECT(2);
-          }
-      }
-    UNPROTECT(2);
-    return listret;
+    return get_mat_vector(lp, j, lpx_get_num_cols, lpx_get_mat_col);
 } 
+
 /** glpk api: double lpx_get_rii(LPX *lp, int i); **/
 SEXP R_lpx_get_rii(SEXP lp, SEXP i)
 {
@@ -883,12 +817,9 @@ SEXP R_lpx_get_rii(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_rii(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -903,12 +834,9 @@ SEXP R_lpx_get_sjj(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_sjj(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -923,12 +851,9 @@ SEXP R_lpx_is_b_avail(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_is_b_avail(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -943,12 +868,9 @@ SEXP R_lpx_get_b_info(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_b_info(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -963,12 +885,9 @@ SEXP R_lpx_get_row_b_ind(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_b_ind(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -983,12 +902,9 @@ SEXP R_lpx_get_col_b_ind(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_b_ind(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1003,12 +919,9 @@ SEXP R_lpx_get_status(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_status(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1023,12 +936,9 @@ SEXP R_lpx_get_prim_stat(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_prim_stat(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1043,12 +953,9 @@ SEXP R_lpx_get_dual_stat(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_dual_stat(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1063,12 +970,9 @@ SEXP R_lpx_get_obj_val(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_obj_val(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1083,12 +987,9 @@ SEXP R_lpx_get_row_stat(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_stat(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1103,12 +1004,9 @@ SEXP R_lpx_get_row_prim(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_prim(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1123,12 +1021,9 @@ SEXP R_lpx_get_row_dual(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_row_dual(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1143,12 +1038,9 @@ SEXP R_lpx_get_col_stat(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_stat(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1163,12 +1055,9 @@ SEXP R_lpx_get_col_prim(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_prim(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1183,12 +1072,9 @@ SEXP R_lpx_get_col_dual(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_col_dual(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1203,12 +1089,9 @@ SEXP R_lpx_get_ray_info(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_ray_info(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1223,12 +1106,9 @@ SEXP R_lpx_ipt_status(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_status(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1243,12 +1123,9 @@ SEXP R_lpx_ipt_obj_val(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_obj_val(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1263,12 +1140,9 @@ SEXP R_lpx_ipt_row_prim(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_row_prim(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1283,12 +1157,9 @@ SEXP R_lpx_ipt_row_dual(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_row_dual(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1303,12 +1174,9 @@ SEXP R_lpx_ipt_col_prim(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_col_prim(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1323,12 +1191,9 @@ SEXP R_lpx_ipt_col_dual(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_ipt_col_dual(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1343,12 +1208,9 @@ SEXP R_lpx_mip_status(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_mip_status(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1363,12 +1225,9 @@ SEXP R_lpx_mip_obj_val(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_mip_obj_val(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1383,12 +1242,9 @@ SEXP R_lpx_mip_row_val(SEXP lp, SEXP i)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_mip_row_val(R_ExternalPtrAddr(lp), INTEGER_VALUE(i));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1403,12 +1259,9 @@ SEXP R_lpx_mip_col_val(SEXP lp, SEXP j)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_mip_col_val(R_ExternalPtrAddr(lp), INTEGER_VALUE(j));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1447,12 +1300,9 @@ SEXP R_lpx_get_int_parm(SEXP lp, SEXP parm)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_int_parm(R_ExternalPtrAddr(lp), INTEGER_VALUE(parm));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1479,12 +1329,9 @@ SEXP R_lpx_get_real_parm(SEXP lp, SEXP parm)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_get_real_parm(R_ExternalPtrAddr(lp), INTEGER_VALUE(parm));
-    if (xret)
-      {
-        PROTECT(ret = NEW_NUMERIC(1));
-        NUMERIC_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_NUMERIC(1));
+    NUMERIC_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1547,12 +1394,9 @@ SEXP R_lpx_simplex(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_simplex(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1567,12 +1411,9 @@ SEXP R_lpx_interior(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_interior(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1587,12 +1428,9 @@ SEXP R_lpx_integer(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_integer(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1607,12 +1445,9 @@ SEXP R_lpx_intopt(SEXP mip)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_intopt(R_ExternalPtrAddr(mip));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1627,12 +1462,9 @@ SEXP R_lpx_invert(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_invert(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1644,7 +1476,7 @@ SEXP R_lpx_ftran(SEXP lp, SEXP x)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_ftran(R_ExternalPtrAddr(lp), NUMERIC_POINTER(x)); 
+    lpx_ftran(R_ExternalPtrAddr(lp), &(NUMERIC_POINTER(x)[-1])); 
 end:
     return ret;
 } 
@@ -1656,7 +1488,7 @@ SEXP R_lpx_btran(SEXP lp, SEXP x)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_btran(R_ExternalPtrAddr(lp), NUMERIC_POINTER(x)); 
+    lpx_btran(R_ExternalPtrAddr(lp), &(NUMERIC_POINTER(x)[-1])); 
 end:
     return ret;
 } 
@@ -1668,7 +1500,7 @@ SEXP R_lpx_eval_b_prim(SEXP lp, SEXP row_prim, SEXP col_prim)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_eval_b_prim(R_ExternalPtrAddr(lp), NUMERIC_POINTER(row_prim), NUMERIC_POINTER(col_prim)); 
+    lpx_eval_b_prim(R_ExternalPtrAddr(lp), &(NUMERIC_POINTER(row_prim)[-1]), &(NUMERIC_POINTER(col_prim)[-1])); 
 end:
     return ret;
 } 
@@ -1680,7 +1512,7 @@ SEXP R_lpx_eval_b_dual(SEXP lp, SEXP row_dual, SEXP col_dual)
     R_LPX_CHECK(lp);
 
     if (R_glpk_setjmp()) goto end;
-    lpx_eval_b_dual(R_ExternalPtrAddr(lp), NUMERIC_POINTER(row_dual), NUMERIC_POINTER(col_dual)); 
+    lpx_eval_b_dual(R_ExternalPtrAddr(lp), &(NUMERIC_POINTER(row_dual)[-1]), &(NUMERIC_POINTER(col_dual)[-1])); 
 end:
     return ret;
 } 
@@ -1695,12 +1527,9 @@ SEXP R_lpx_warm_up(SEXP lp)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_warm_up(R_ExternalPtrAddr(lp));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1714,13 +1543,10 @@ SEXP R_lpx_eval_tab_row(SEXP lp, SEXP k, SEXP ind, SEXP val)
 
     if (R_glpk_setjmp()) goto end;
 
-    xret = lpx_eval_tab_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(k), INTEGER_POINTER(ind), NUMERIC_POINTER(val));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    xret = lpx_eval_tab_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(k), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1]));
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1734,13 +1560,10 @@ SEXP R_lpx_eval_tab_col(SEXP lp, SEXP k, SEXP ind, SEXP val)
 
     if (R_glpk_setjmp()) goto end;
 
-    xret = lpx_eval_tab_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(k), INTEGER_POINTER(ind), NUMERIC_POINTER(val));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    xret = lpx_eval_tab_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(k), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1]));
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1754,13 +1577,10 @@ SEXP R_lpx_transform_row(SEXP lp, SEXP len, SEXP ind, SEXP val)
 
     if (R_glpk_setjmp()) goto end;
 
-    xret = lpx_transform_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(len), INTEGER_POINTER(ind), NUMERIC_POINTER(val));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    xret = lpx_transform_row(R_ExternalPtrAddr(lp), INTEGER_VALUE(len), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1]));
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1774,13 +1594,10 @@ SEXP R_lpx_transform_col(SEXP lp, SEXP len, SEXP ind, SEXP val)
 
     if (R_glpk_setjmp()) goto end;
 
-    xret = lpx_transform_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(len), INTEGER_POINTER(ind), NUMERIC_POINTER(val));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    xret = lpx_transform_col(R_ExternalPtrAddr(lp), INTEGER_VALUE(len), &(INTEGER_POINTER(ind)[-1]), &(NUMERIC_POINTER(val)[-1]));
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1796,8 +1613,9 @@ SEXP R_lpx_read_mps(SEXP fname)
     xret = lpx_read_mps(CHARACTER_VALUE(fname));
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -1813,12 +1631,9 @@ SEXP R_lpx_write_mps(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_write_mps(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1833,12 +1648,9 @@ SEXP R_lpx_read_bas(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_read_bas(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1853,12 +1665,9 @@ SEXP R_lpx_write_bas(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_write_bas(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1874,8 +1683,9 @@ SEXP R_lpx_read_freemps(SEXP fname)
     xret = lpx_read_freemps(CHARACTER_VALUE(fname));
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -1891,12 +1701,9 @@ SEXP R_lpx_write_freemps(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_write_freemps(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1911,12 +1718,9 @@ SEXP R_lpx_print_prob(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_print_prob(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1931,12 +1735,9 @@ SEXP R_lpx_print_sol(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_print_sol(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1951,12 +1752,9 @@ SEXP R_lpx_print_ips(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_print_ips(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1971,12 +1769,9 @@ SEXP R_lpx_print_mip(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_print_mip(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -1991,12 +1786,9 @@ SEXP R_lpx_print_sens_bnds(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_print_sens_bnds(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -2012,8 +1804,9 @@ SEXP R_lpx_read_cpxlp(SEXP fname)
     xret = lpx_read_cpxlp(CHARACTER_VALUE(fname));
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -2029,12 +1822,9 @@ SEXP R_lpx_write_cpxlp(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_write_cpxlp(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 } 
@@ -2050,8 +1840,9 @@ SEXP R_lpx_extract_prob(SEXP mpl)
     xret = lpx_extract_prob(R_ExternalPtrAddr(mpl));
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -2088,8 +1879,9 @@ SEXP R_lpx_read_prob(SEXP fname)
     xret = lpx_read_prob(CHARACTER_VALUE(fname));
     if (xret)
       {
-        ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
-        R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    ret = R_MakeExternalPtr(xret, LPX_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); 
       } 
 end:
     return ret;
@@ -2105,12 +1897,9 @@ SEXP R_lpx_write_prob(SEXP lp, SEXP fname)
     if (R_glpk_setjmp()) goto end;
 
     xret = lpx_write_prob(R_ExternalPtrAddr(lp), CHARACTER_VALUE(fname));
-    if (xret)
-      {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER_POINTER(ret)[0] = xret;
-        UNPROTECT(1); 
-      } 
+    PROTECT(ret = NEW_INTEGER(1));
+    INTEGER_POINTER(ret)[0] = xret;
+    UNPROTECT(1);  
 end:
     return ret;
 }

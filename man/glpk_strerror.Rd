@@ -25,14 +25,14 @@
     Andrew Makhorin <mao@gnu.org>   (GLPK)
 } 
 \note{
-    The global data frame \code{lpx_variables} contains symbolic, string,
+    The global data frame \code{lpx_constants} contains symbolic, string,
     and numeric values associated with these variables.
 
     Inquiries regarding this interface (R-GLPK) should NOT be sent to
     GNU GLPK mailing lists.
 }
 \seealso{
-    \code{\link{lpx_variables}}
+    \code{\link{lpx_constants}}
 }
 %\examples{
 %}

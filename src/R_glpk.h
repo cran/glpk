@@ -7,7 +7,7 @@
 #define R_GLPK_CHARACTER_VALUE(a) \
   (a == R_NilValue ? NULL : CHARACTER_VALUE(a))
 
-jmp_buf R_glpk_env;
+extern jmp_buf R_glpk_env;
 
 SEXP R_lpx_init(void);
 

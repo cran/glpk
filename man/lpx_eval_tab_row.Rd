@@ -38,14 +38,14 @@
     Andrew Makhorin <mao@gnu.org>   (GLPK)
 } 
 \note{
-    This function, documentation, and associated R-API code has been
-    automatically generated using translation utilities developed for this
-    package (distributed with the R-glpk source).  Caveat Emptor. 
+    The generation of this function code, documentation, and R-API code has
+    largely been automated.  Therefore, not all functions have been fully
+    tested.  Beware and please report any bugs or inconsistencies.
 
     The full documentation for GLPK has not been converted to Rd format --
     it is available in the GLPK source distribution. 
 
-    Inquiries regarding this interface (R-GLPK) should not be sent to
+    Inquiries regarding this interface (R-GLPK) should NOT be sent to
     GNU GLPK mailing lists.
 }
 %\seealso{

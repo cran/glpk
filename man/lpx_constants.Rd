@@ -1,5 +1,5 @@
-\name{lpx_variables}
-\alias{lpx_variables}
+\name{lpx_constants}
+\alias{lpx_constants}
 \alias{LPX_LP}
 \alias{LPX_MIP}
 \alias{LPX_MIN}
@@ -95,12 +95,12 @@
     Constant or return codes for the GLPK lpx class.
 }
 \description{
-    This is a constant or return code used in the GLPK API.
+    These are constants or return codes used in the GLPK API.
 
-    The function \code{glpk_strerror} may be used to convert this value
+    The function \code{glpk_strerror} may be used to convert these values
     into a string.
 
-    The global data frame \code{lpx_variables} contains symbolic, string,
+    The global data frame \code{lpx_constants} contains symbolic, string,
     and numeric values associated with these variables.
 
     Please see the GLPK documentation for more info.
@@ -397,6 +397,8 @@
 
     Andrew Makhorin <mao@gnu.org>   (GLPK)
 } 
-%\examples{
-%}
+\examples{
+    lp = lpx_create_prob()
+    glpk_strerror(lpx_get_status(lp))
+}
 \keyword{optimize}

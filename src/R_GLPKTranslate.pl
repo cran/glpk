@@ -2,7 +2,7 @@ use English;
 use Getopt::Long;
 use Switch;
 use Template;
-use GLPKParseTools;
+use R_GLPKParseTools;
 use strict;
 
 our $usage =  <<EOF;
@@ -10,13 +10,13 @@ our $usage =  <<EOF;
 Usage: $PROGRAM_NAME MODE [MODE_OPTIONS] HEADER_FILE
 
 Examples:
-    $PROGRAM_NAME --mode=api --templ=C_api.tt glplpx.h
+    $PROGRAM_NAME --mode=api --templ=R_c_api.tt glplpx.h
     $PROGRAM_NAME --mode=var --debug glplpx.h
 
 Availablie modes:
     api     Translate declarations to a API using a template.
     doc     Translate declarations to R documentation using a template.
-    var     Translate GLPK C-define variables into R structures.
+    var     Translate GLPK C-define variables/constants into R structures.
 EOF
 
 sub useage_info {
@@ -38,21 +38,21 @@ useage_info if not $ARGV[0];
 my $t;
 switch ($Mode)
     {
-        case 'api'   { $t = GLPKTranslatorAPI->new($ARGV[0]) }
-        case 'doc'   { $t = GLPKTranslatorDoc->new($ARGV[0]) }
-        case 'var'   { $t = GLPKTranslatorDefineVar->new($ARGV[0]) }
+        case 'api'   { $t = R_GLPKTranslatorAPI->new($ARGV[0]) }
+        case 'doc'   { $t = R_GLPKTranslatorDoc->new($ARGV[0]) }
+        case 'var'   { $t = R_GLPKTranslatorDefineVar->new($ARGV[0]) }
         else         { useage_info() }
     }
 $t->translate;
 
-package GLPKTranslator;
+package R_GLPKTranslator;
 use Data::Dumper;
 
 sub new { 
     my ($class, $file, $pt) = @_;
 
     bless { file => $file, 
-            pt   => $pt ? $pt : new GLPKDeclParser,
+            pt   => $pt ? $pt : new R_GLPKDeclParser,
             tt   => new Template,
     }, $class;
 }
@@ -87,8 +87,8 @@ sub debug {
     exit;
 }
 
-package GLPKTranslatorAPI;
-use base 'GLPKTranslator';
+package R_GLPKTranslatorAPI;
+use base 'R_GLPKTranslator';
 use English;
 
 sub usage_info {
@@ -113,8 +113,8 @@ sub translate {
     $s->tt->process($Templ, $data) || die $s->tt->error;
 }
 
-package GLPKTranslatorDoc;
-use base 'GLPKTranslator';
+package R_GLPKTranslatorDoc;
+use base 'R_GLPKTranslator';
 use English;
 
 sub usage_info {
@@ -126,7 +126,7 @@ Options for $Mode mode:
     [--debug]               Print parse structures and exit.
     [--write]               Write to files instead of STDOUT.  This will
                             write R doc files named after the R functions.
-                            (ie, lpx.create.prob.Rd).  Will not clobber
+                            (ie, lpx_create_prob.Rd).  Will not clobber
                             any existing files of the same name.
 
 EOF
@@ -139,8 +139,8 @@ sub translate {
     my $data = $s->SUPER::translate;
     for (@{$data->{symbols}})
       {
-       my $outfile = $_->{R_r_method}.'.Rd';
-       $s->process_doc($data, $outfile);
+        my $outfile = $_->{R_r_method}.'.Rd';
+        $s->process_doc($_, $outfile);
       }
 }
 
@@ -158,13 +158,8 @@ sub process_doc {
       }
 }
 
-package GLPKTranslatorDebug;
-use base 'GLPKTranslator';
-
-sub translate { shift->debug }
-
-package GLPKTranslatorDefineVar;
-use base qw(GLPKTranslator GLPKTranslatorDoc);
+package R_GLPKTranslatorDefineVar;
+use base qw(R_GLPKTranslator R_GLPKTranslatorDoc);
 use Switch;
 
 sub usage_info {
@@ -186,7 +181,7 @@ EOF
 
 sub new {
     my ($class, $file) = @_;
-    $class->SUPER::new($file, new GLPKDefineVarParser)
+    $class->SUPER::new($file, new R_GLPKDefineVarParser)
 }
 
 sub translate {

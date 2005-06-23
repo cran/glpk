@@ -4,12 +4,15 @@
 [% s.R_r_method %] =
 function([% s.glpk_method_par_names.join(', ') %])
 {
-    ret = .Call("[% s.R_c_method %]"
+    [%- IF s.glpk_method_ret == 'void' %]
+        [%- SET retfun = 'invisible' %]
+    [%- ELSE %]
+        [%- SET retfun = 'return' %]
+    [%- END -%]
+
+    [% retfun %](.Call("[% s.R_c_method %]"
       [%- IF s.R_r_par_conv %], 
         [%- s.R_r_par_conv.join(', ') %]
-      [%- END %], PACKAGE=.glpkPackageName);
-
-    if (is.null(ret)) invisible(ret)
-    else return(ret)
+      [%- END %], PACKAGE=.glpkPackageName))
 }
 [%- END %]

@@ -43,7 +43,7 @@ SEXP R_[% s.glpk_method %]([% s.R_c_method_par.join(', ') %])
     [%- END %]
 
     [%- IF s.Clean(s.glpk_method_par_types.0) == s.glpk_class_type %]
-    R_[% s.glpk_class_type %]_TYPE_CHECK([% s.glpk_method_par_names.0 %]);
+    R_[% s.glpk_class_type %]_CHECK([% s.glpk_method_par_names.0 %]);
     [%- END %]
 
     if (R_glpk_setjmp()) goto end;
@@ -52,27 +52,31 @@ SEXP R_[% s.glpk_method %]([% s.R_c_method_par.join(', ') %])
     [%- ELSE %]
 
     xret = [% s.glpk_method %]([% s.R_c_par_conv.join(', ') %]);
+    [%- IF s.glpk_method_ret_kind == 'POINTER' %]
     if (xret)
       {
-        [%- SWITCH s.R_c_ret %]
-        [%- CASE 'SEXP' %]
-        ret = R_MakeExternalPtr(xret, 
-        [%- s.Clean(s.glpk_method_ret) %]_type_tag, R_NilValue);
-        /** !! Replace with appropriate finalizer !! **/
-        /* R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob); */
-        [%- CASE [ 'CHARACTER' 'NUMERIC' 'INTEGER' ] %]
-        PROTECT(ret = NEW_[% s.R_c_ret %](1));
-        [%- SWITCH s.R_c_ret %]
-            [%- CASE 'CHARACTER' %]
-        SET_STRING_ELT(ret, 0, mkChar(xret));
-            [%- CASE 'NUMERIC' %]
-        NUMERIC_POINTER(ret)[0] = xret;
-            [%- CASE 'INTEGER' %]
-        INTEGER_POINTER(ret)[0] = xret;
-        [%- END %]
-        UNPROTECT(1);
-        [%- END %] [%# switch s.R_c_ret %]
+    [%- END %]
+    [%- SWITCH s.R_c_ret %]
+    [%- CASE 'SEXP' %]
+    ret = R_MakeExternalPtr(xret, 
+    [%- s.Clean(s.glpk_method_ret) %]_type_tag, R_NilValue);
+    /** !! Replace with appropriate finalizer !! **/
+    R_RegisterCFinalizer(ret, (R_CFinalizer_t) R_lpx_delete_prob);
+    [%- CASE [ 'CHARACTER' 'NUMERIC' 'INTEGER' ] %]
+    PROTECT(ret = NEW_[% s.R_c_ret %](1));
+    [%- SWITCH s.R_c_ret %]
+        [%- CASE 'CHARACTER' %]
+    SET_STRING_ELT(ret, 0, mkChar(xret));
+        [%- CASE 'NUMERIC' %]
+    NUMERIC_POINTER(ret)[0] = xret;
+        [%- CASE 'INTEGER' %]
+    INTEGER_POINTER(ret)[0] = xret;
+    [%- END %]
+    UNPROTECT(1);
+    [%- END %] [%# switch s.R_c_ret %]
+    [%- IF s.glpk_method_ret_kind == 'POINTER' %]
       }
+    [%- END %]
         [%- END %] [%# if glpk_method_ret != 'void' %]
 end:
     return ret;
