@@ -393,7 +393,7 @@
     The GNU GLPK home page at http://www.gnu.org/software/glpk/glpk.html
 }
 \author{
-    Lopaka Lee      <rlee@fpcc.net> (R-GLPK)
+    Lopaka Lee      <rclee@usgs.gov> (R-GLPK)
 
     Andrew Makhorin <mao@gnu.org>   (GLPK)
 } 
