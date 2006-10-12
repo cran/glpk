@@ -1,0 +1,397 @@
+% \VignetteIndexEntry{R package for using the Gnu Linear Programming Toolkit (GLPK)}
+% \VignetteDepends{glpk}
+% \VignetteKeyword{Linear Progamming}
+
+\documentclass[letterpaper]{article}
+
+\title{Introduction to R-GLPK}
+\author{Louis Luangkesorn \footnote{lluang@yahoo.com.  Thanks to Leo Lopes for his comments and suggestions.}}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document introduces the use of the GLPK package\footnote{Package GLPK maintained by Lopaka Lee} for R.  The GNU Linear Programming Package (GLPK) is intended for solving linear programming (LP) and mixed integer programming (MIP) and other related problems. In addition, it includes facilities for converting problem information between the GNU MathProg language (a subset of the AMPL mathematical programming language), free and fixed MPS, and the CPLEX LP formats.\footnote{GNU Linear Programming Kit:  Reference Manual, Version 4.9 Draft, January 2006.}  The GLPK package is an interface into the C Application Programming Interface (API) to the GLPK solver.
+
+This document will introduce the use of the GLPK package through the use of the  cannery problem from Dantzig\footnote{The demand data here is from the GLPK documentation, which differs slightly from Dantzig, Linear Programming and Extensions, Princeton University Press, Princeton, NJ, 1963.  The documentation demand values are used here for consistancy.} which is used in the GNU MathProg documentation.\footnote{GNU Linear Programming Kit:  Modeling Language GNU MathProg, Version 4.9 Draft, January 2006.}  The model file describing the cannery problem can be found in Appendix \ref{app:model}.
+
+\section{Entering the model}
+
+To use {\tt glpk}, first load the package.
+
+<<>>=
+library(glpk)
+@
+
+Next read in the model and data.
+
+There are several ways of entering the model.  {\tt glpk} can read the model and data in a GNU MathProg Language (GMPL) model file\footnote{or MPS or CPLEX LP formats.}.  Alternatively, the model and data can be entered using the GLPK API.
+
+
+\subsection{Reading a GNU MathProg Language model}
+
+If a GMPL model file has already been produced, it can be read directly.  After setting the current directory, the model can be read using {\tt lpx\_read\_model()}.  {\tt lpx\_read\_model()} takes three parameters:
+
+{\tt lpx\_read\_model(modelfile, datafile, outputfile)}
+
+The {\tt modelfile} is required.  However, {\tt datafile} and {\tt outputfile} may be {\tt NULL}.  A {\tt NULL datafile} would indicate that the data was in {\tt modelfile} or that data would be entered via the API.  If {\tt modelfile} included a data section, the data in {\tt datafile} would override data in {\tt modelfile}.  If {\tt outputfile} was {\tt NULL}, the data would be sent to the stdout using the routine {\tt print}.
+
+<<>>=
+lp <- lpx_read_model("transport.mod")
+@
+
+Then examine the problem size within R.
+
+The rows represent the objective function as well as the supply and demand constraints.
+
+<<>>=
+numrows <- lpx_get_num_rows(lp)
+numrows
+
+
+for (i in 1:numrows){
+	print(lpx_get_row_name(lp, i))
+}
+@
+
+The columns represent the decision variables, which are the units sent over the cannary-market links.
+
+<<>>=
+
+numcols <- lpx_get_num_cols(lp)
+numcols
+
+for (j in 1:numcols){
+	print(lpx_get_col_name(lp, j))
+}
+print(lpx_get_num_nz(lp));
+#for (i in 1:numrows){
+#	print(lpx_get_mat_row(lp, i));
+#	print(lpx_get_row_ub(lp,i));
+#	print(lpx_get_row_lb(lp,i));
+#}
+@
+
+After the model and data are entered, the model can then be solved using any one of many algorithms and the output would go to the specified output file.  For the Simplex method, the {\tt lpx\_simplex()} takes the problem name and solves it using the Simplex method.
+
+<<>>=
+lpx_simplex(lp)
+@
+
+We can then look at the solution in terms of the objective and constraints
+
+<<>>=
+for (i in 1:numrows){
+print(lpx_get_row_name(lp, i));
+print(lpx_get_row_prim(lp, i))
+}
+@
+
+as well as the decision variables.
+
+<<>>=
+for (j in 1:numcols){
+print(lpx_get_col_name(lp, j));
+print(lpx_get_col_prim(lp, j))
+}
+@
+
+\subsection{Using the API}
+
+If the problem data already in {\em R}, such as pulled from a database or the result of previous analysis, the model and the data can be specified using the API.
+
+First create R data objects to hold the various model parameters.
+
+<<>>=
+print ("USING API")
+canneries <- c("Seattle", "San-Diego")
+capacity <- c(350, 600)
+markets <- c("New-York", "Chicago", "Topeka")
+demand <- c(325, 300, 275)
+distance <- c(2.5, 2.5, 1.7, 1.8, 1.8, 1.4)
+dim(distance) <- c(2, 3)
+freight <- 90
+@
+
+To use the API, define a problem instance and indicate that the objective is to minimize cost.
+
+<<>>=
+lpi <- lpx_create_prob()
+lpx_set_prob_name(lpi, "cannery API")
+lpx_set_obj_name(lpi, "Total Cost")
+lpx_set_obj_dir(lpi, LPX_MIN)
+@
+
+There are 6 columns, corresponding to the six potential cannery-market pairs whose transport the model solving for, each of which has a lower bound of zero.
+
+<<>>=
+numlinks <- length(distance)
+nummarkets <- length(markets)
+numcanneries <- length(canneries)
+lpx_add_cols(lpi, numlinks)
+for (i in 1:numcanneries){
+	cannerystartrow <- (i-1) * nummarkets
+	for (j in 1:nummarkets){
+		colname <-toString(c(canneries[i], markets[j]));
+		transcost <- distance[i, j]*freight/1000;
+		lpx_set_col_name(lpi, cannerystartrow+j, colname);
+		lpx_set_col_bnds(lpi, cannerystartrow+j, LPX_LO, 0.0, 0.0);
+		lpx_set_obj_coef(lpi, cannerystartrow+j, transcost)
+	}
+}
+@
+
+Next, we will add constraints.  There are 5 constraints, two supply constraints relating to the canneries and three demand constraints relating to the markets. In addition, we will make the first row correspond to the objective function.  The objective row will be free, and does not have upper or lower bounds.
+
+<<>>=
+numcanneries <- length(canneries)
+nummarkets <- length(markets)
+lpx_add_rows(lpi, numcanneries+nummarkets+1)
+lpx_set_row_name(lpi, 1, lpx_get_obj_name(lpi))
+for (i in 1:numcanneries){
+	lpx_set_row_name(lpi, i+1, toString(c("Supply", canneries[i])));
+	lpx_set_row_bnds(lpi, i+1, LPX_UP, 0, capacity[i])
+}
+for (j in 1:nummarkets){
+	lpx_set_row_name(lpi, numcanneries+j+1, toString(c("Demand", markets[j])));
+	lpx_set_row_bnds(lpi, numcanneries+j+1, LPX_LO, demand[j], 0)
+}
+@
+Now, load the constraint matrix which represents the objective function and the constraints.  The non-zero values of the matrix are entered as three vectors, each with one element for each non-zero value.  A vector to indicate the row, a vector to indicate the column, and a vector which contains the matrix element value.  Last, we call {\tt lpx\_load\_matrix(lpi)} to finish. Note that in {\em R} the size of the vectors does not need to be prespecified, as {\em R} will increase the size of the vectors as necessary.
+
+<<>>=
+# create variables to hold the constraint information
+ia <- numeric()
+ja <- numeric()
+ar <- numeric()
+
+# add in objective coefficients
+
+for (i in 1:numcols){
+	ia[i] <- 1;
+	ja[i] <- i;
+	ar[i] <- lpx_get_obj_coef(lpi, i);
+}
+
+for (i in 1:numcanneries){
+	#supply constraints
+	cannerysupplyrow = numcols + (i-1)*nummarkets
+	for (j in 1:nummarkets){
+		ia[cannerysupplyrow+j] <- (i+1);
+		ja[cannerysupplyrow+j] <- (i-1)+numcanneries *(j-1)+1;
+		ar[cannerysupplyrow+j] <- 1;
+	}
+	#demand constraints
+	marketdemandrow = numcols+numcanneries * nummarkets
+	for (j in 1:nummarkets){
+		colnum <- (i-1)*nummarkets+j
+		ia[marketdemandrow + colnum] <- numcanneries+j+1;
+		ja[marketdemandrow + colnum] <- colnum;
+		ar[marketdemandrow + colnum] <- 1;
+	}
+}
+lpx_load_matrix(lpi, length(ia), ia, ja, ar);
+@
+
+Then, examine the problem entered in the API.
+
+<<>>=
+numrows <- lpx_get_num_rows(lpi)
+numrows
+numcols <- lpx_get_num_cols(lpi)
+numcols
+for (i in 1:numrows){
+	print(lpx_get_row_name(lpi, i))
+}
+for (j in 1:numcols){
+	print(lpx_get_col_name(lpi, j))
+}
+print(lpx_get_num_nz(lpi));
+@
+
+Finally solve using the simplex method and look at the solution.
+
+<<>>=
+lpx_simplex(lpi);
+
+for (i in 1:numrows){
+print(lpx_get_row_name(lpi, i));
+print(lpx_get_row_prim(lpi, i))
+}
+for (j in 1:numcols){
+print(lpx_get_col_name(lpi, j));
+print(lpx_get_col_prim(lpi, j))
+}
+@
+
+Note that the solution using the API has the same objective value as the solution from when the problem was read using the GNU MathProg Language, even if the actual solution may be different.  A more readable summary of the solution can be found by the command  {\tt lpx\_print\_sol(lpi, filename)}.  The output of this is found in Appendix \ref{app:output}.
+
+\subsection{Using API to Modify Model}
+
+Now, we will solve the version of the problem that is found in Dantzig.  The demand at New York and Topeka are both 300 instead of 325 and 275.  This next section will use the API to modify the problem as read through the MathProg file.
+
+In order to examine an individual row, we need to index the rows and columns.  This is done through the use of {\tt lpx\_create\_index(lp)}.  Then we can use the {\tt lpx\_find\_row(lpi, rowname)} and {\tt lpx\_find\_col(lpi, colname)}
+
+<<>>=
+cindex <- lpx_create_index(lp)
+new_york_row = lpx_find_row(lp, "demand[New-York]") 
+topeka_row = lpx_find_row(lp, "demand[Topeka]")
+new_york_row
+topeka_row
+lpx_set_row_bnds(lp, new_york_row, LPX_LO, 300, 0)
+lpx_set_row_bnds(lp, topeka_row, LPX_LO, 300, 0)
+@
+
+We can solve this modified problem.
+
+<<>>=
+lpx_simplex(lp);
+
+for (i in 1:numrows){
+print(lpx_get_row_name(lp, i));
+print(lpx_get_row_prim(lp, i));
+print(lpx_get_row_dual(lp, i))
+}
+for (j in 1:numcols){
+print(lpx_get_col_name(lp, j));
+print(lpx_get_col_prim(lp, j));
+print(lpx_get_obj_coef(lp, j))
+}
+@
+
+
+\appendix
+\section{Model file \label{app:model}}
+{\bf {\it TRANSPORT.MOD}}
+{\small
+\begin{verbatim}
+# A TRANSPORTATION PROBLEM
+#
+# This problem finds a least cost shipping schedule that meets
+# requirements at markets and supplies at factories.
+#
+#  References:
+#              Dantzig, G B., Linear Programming and Extensions
+#              Princeton University Press, Princeton, New Jersey, 1963,
+#              Chapter 3-3.  
+set I;
+/* canning plants */
+
+set J;
+/* markets */
+
+param a{i in I};
+/* capacity of plant i in cases */
+
+param b{j in J};
+/* demand at market j in cases */
+
+param d{i in I, j in J};
+/* distance in thousands of miles */
+
+param f;
+/* freight in dollars per case per thousand miles */
+
+param c{i in I, j in J} := f * d[i,j] / 1000;
+/* transport cost in thousands of dollars per case */
+
+var x{i in I, j in J} >= 0;
+/* shipment quantities in cases */
+
+minimize cost: sum{i in I, j in J} c[i,j] * x[i,j];
+/* total transportation costs in thousands of dollars */
+
+s.t. supply{i in I}: sum{j in J} x[i,j] <= a[i];
+/* observe supply limit at plant i */
+
+s.t. demand{j in J}: sum{i in I} x[i,j] >= b[j];
+/* satisfy demand at market j */
+
+data;
+
+set I := Seattle San-Diego;
+
+set J := New-York Chicago Topeka;
+
+
+param a := Seattle     350
+           San-Diego   600;
+
+param b := New-York    325
+           Chicago     300
+           Topeka      275;
+
+param d :              New-York   Chicago   Topeka :=
+           Seattle     2.5        1.7       1.8
+           San-Diego   2.5        1.8       1.4  ;
+
+param f := 90;
+
+end;
+\end{verbatim}
+}
+
+\section{Output \label{app:output}}
+
+The following is the output of the command:
+{\tt lpx\_print\_sol(lpi, "transout.api")}
+
+\begin{verbatim}
+Problem:    cannery API
+Rows:       6
+Columns:    6
+Non-zeros:  18
+Status:     OPTIMAL
+Objective:  Total Cost = 153.675 (MINimum)
+
+No.   Row name  St Activity  Lower bound Upper bound  Marginal
+--- ----------- -- --------- ----------- ----------- ---------
+  1 Total Cost  B    153.675                            
+  2 Supply , Seattle
+                B        325                    350 
+  3 Supply , San-Diego
+                B        575                    600 
+  4 Demand , New-York
+                NL       325        325                 0.225
+  5 Demand , Chicago
+                NL       300        300                 0.153
+  6 Demand , Topeka
+                NL       275        275                 0.126
+
+No. Column name St Activity  Lower bound Upper bound  Marginal
+--- ----------- -- --------- ----------- ----------- ---------
+  1 Seattle, New-York
+                B        325          0              
+  2 Seattle, Chicago
+                B        300          0              
+  3 Seattle, Topeka
+                NL         0          0                 0.036
+  4 San-Diego, New-York
+                NL         0          0                 < eps
+  5 San-Diego, Chicago
+                NL         0          0                 0.009
+  6 San-Diego, Topeka
+                B        275          0              
+
+Karush-Kuhn-Tucker optimality conditions:
+
+KKT.PE: max.abs.err. = 1.24e-014 on row 1
+        max.rel.err. = 8.02e-017 on row 1
+        High quality
+
+KKT.PB: max.abs.err. = 0.00e+000 on row 0
+        max.rel.err. = 0.00e+000 on row 0
+        High quality
+
+KKT.DE: max.abs.err. = 0.00e+000 on column 0
+        max.rel.err. = 0.00e+000 on column 0
+        High quality
+
+KKT.DB: max.abs.err. = 0.00e+000 on row 0
+        max.rel.err. = 0.00e+000 on row 0
+        High quality
+
+End of output
+\end{verbatim}
+\end{document}
